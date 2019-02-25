@@ -5,19 +5,23 @@ Created on Tue Jul 15 07:22:23 2014
 @author: steven.hill
 """
 import sys
-sys.path.append('g:\\Astronomy\Python Play')
+sys.path.append('f:\\Astronomy\Python Play')
 import matplotlib.pyplot as pl
 import pylab
 import numpy as np
 from scipy import interpolate
 import scipy
 from copy import deepcopy
-import ComputeEW1 as CEW1
+import ComputeEW1 as CEW1 #This is directly under /Python Play
+                            #I need to compare it to the ComputeEW that I
+                            #am now configuration controlling and make the 
+                            #switch
+import EquivWidthUtils as EWU
 import quantities
 from PyAstronomy import pyasl #This is where the best smoothing algorithm is!
 import datetime
 
-Jupiter_Karkoschka1993 = scipy.fromfile(file="../../Saturn Project 2013/Spectroscopy/Karkoschka/1993.tab.txt", dtype=float, count=-1, sep=" ")    
+Jupiter_Karkoschka1993 = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Saturn/Spectral Data/Karkoschka/1993.tab.txt", dtype=float, count=-1, sep=" ")    
 Jupiter_Karkoschka1993=scipy.reshape(Jupiter_Karkoschka1993,[Jupiter_Karkoschka1993.size/8,8])
 
 Jupiter_KarkRef1993=np.zeros((Jupiter_Karkoschka1993.size/8,2))
@@ -54,17 +58,17 @@ for time in range (0,len(KeyArray)):
     # Read and reshape spectral data files    
     #CLR = scipy.fromfile(file="Data/20150209UT/JupiterSpectrum-20150209T034323UT-sum200s-001thru010-CLR-Aligned-RotCrop-LinearWV.dat", dtype=float, count=-1, sep='\t')    
     #NIR = scipy.fromfile(file="Data/20150209UT/JupiterSpectrum-20150209T034409UT-sum400s-001thru010-742-Aligned-RotCrop.dat", dtype=float, count=-1, sep='\t')    
-    CLR = scipy.fromfile(file="Data/20150123UT/"+CFN, dtype=float, count=-1, sep='\t')    
+    CLR = scipy.fromfile(file="../Data/20150123UT/"+CFN, dtype=float, count=-1, sep='\t')    
     
-    NormResponsewithWV= scipy.fromfile(file="PolluxResponse20150123UT.txt", dtype=float, count=-1, sep=" ")
+    NormResponsewithWV= scipy.fromfile(file="../PolluxResponse20150123UT.txt", dtype=float, count=-1, sep=" ")
     CLR=scipy.reshape(CLR,[CLR.size/2,2])
-    NativeDispersion=(CLR[(CLR.size/2.-1),0]-CLR[0,0])/(CLR.size/2.-1.)
+    NativeDispersion=(CLR[(CLR.size/2-1),0]-CLR[0,0])/(CLR.size/2-1)
 #    NIR[:,0]=NIR[:,0]+16.
     NRespWV=scipy.reshape(NormResponsewithWV,[NormResponsewithWV.size/2,2])
-    MasterDispersion=(NRespWV[(NRespWV.size/2.-1),0]-NRespWV[0,0])/(NRespWV.size/2.-1.)
+    MasterDispersion=(NRespWV[(NRespWV.size/2-1),0]-NRespWV[0,0])/(NRespWV.size/2-1)
     
     #Load Reference Spectrum: Average G2v for albedo calculations
-    Ref = scipy.loadtxt("g2v.dat", dtype=float, skiprows=3,usecols=(0,1))
+    Ref = scipy.loadtxt("../g2v.dat", dtype=float, skiprows=3,usecols=(0,1))
     temp=Ref[:,1]
     temp=pyasl.smooth(temp,11,'flat')
     Ref[:,1]=temp
@@ -83,9 +87,10 @@ for time in range (0,len(KeyArray)):
        
     MASTER=deepcopy(Ref)
     MASTER[:,1]= CLRonRef
+    MASTER[:,0]=MASTER[:,0]/10.
     
-    #Compute EWs for telluric bands from MASTER
-    EWFN=Key+"-RawFlux-EW.txt"
+    #################################Compute EWs for telluric bands from MASTER
+    EWFN="../EWs/"+Key+"-RawFlux-EW.txt"
     Target="Jupiter"
     print "Key=",Key
     DateTime=datetime.datetime.strptime(Key[7:11]+"-"+Key[11:13]+"-" \
@@ -93,33 +98,18 @@ for time in range (0,len(KeyArray)):
             '%Y-%m-%dT%H:%M:%S')
     print "DateTime=",DateTime            
 
-    BandType="Solar"
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Fe 3820",3820.,3860.,20.,EWFN,False)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Ca II H&K",3920.,3990.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H Delta",4085.,4113.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Ca I 'g band'",4215.,4240.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"G band 4300",4270.,4330.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H Gamma",4330.,4350.,10.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Fe I 'd band'",4365.,4405.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H Beta",4815.,4890.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Mg 5170",5140.,5200.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Fe I 5270",5240.,5290.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"Na D",5870.,5920.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H Alpha 6563 band",6530.,6590.,20.,EWFN,True)
-    BandType="Telluric"
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"O2 6300 band",6260.,6360.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"O2 B band",6850.,6920.,50.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H2O 7200a band",6910.,7090.,10.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"H2O 7200b band",7150.,7350.,20.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"O2 A band",7540.,7720.,40.,EWFN,True)
-    BandType="Target"
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"CH4 5430",5350.,5470.,60.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"CH4 6190",6100.,6280.,100.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"CH4 7050",6980.,7090.,40.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(MASTER,Target,DateTime,BandType,"CH4 7250",7140.,7450.,80.,EWFN,True)
-    
+    Bands=EWU.LinesBands_to_Measure("Jupiter_ObsBands_135mm100lpm.txt")
+    Bands.load_records(WVRange=[400.,750.])
+
+    flag=False
+    for B in range(0,len(Bands.ID)):
+        print "B=",B
+        Temp=EWU.ComputeEW1(MASTER,Target,DateTime,Bands.Type[B],Bands.ID[B],
+                            Bands.WV0[B],Bands.WV1[B],Bands.WVCont[B],EWFN,flag)
+        flag=True
+
     #WHAT ABOUT 7900 CH4 BAND????
-    
+    ##################################
     NativeDispersionNM=NativeDispersion/10.
     MasterDispersionNM=MasterDispersion/10.
     
@@ -143,9 +133,9 @@ for time in range (0,len(KeyArray)):
     
     NormAlbedowithWV=deepcopy(Ref)
     NormAlbedowithWV[:,1]=NormAlbedo
-    np.savetxt(Key+"Albedo.txt",NormAlbedowithWV,delimiter=" ",fmt="%10.3F %10.7F")
+    np.savetxt("../1D Spectra/"+Key+"Albedo.txt",NormAlbedowithWV,delimiter=" ",fmt="%10.3F %10.7F")
 
-    EWFN=Key+"-Albedo-EW.txt"
+    EWFN="../EWs/"+Key+"-Albedo-EW.txt"
     
     BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 5430",5350.,5470.,60.,EWFN,False)
     BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 6190",6100.,6280.,100.,EWFN,True)
@@ -181,20 +171,20 @@ for time in range (0,len(KeyArray)):
     pl.xlabel("Wavelength (A)",fontsize=7)
     pl.title(Key+" Spectrum",fontsize=9)
     pl.plot(Ref[:,0]/10.,CLRonRef/(ExposureCLR*Aperture*NativeDispersionNM),label='CLR',linewidth=0.5)
-    pl.plot(MASTER[:,0]/10.,MASTER[:,1]/(ExposureCLR*Aperture*NativeDispersionNM),label='MASTER',color='k',linewidth=1)
-    pl.plot(MASTER[:,0]/10.,ToA//(ExposureCLR*Aperture*NativeDispersionNM),label='Top of Atm.')
-    pl.plot(MASTER[:,0]/10.,Ref[:,1]*1e7,label='Solar Ref. x 1e7')
-    pl.plot(MASTER[:,0]/10.,NormAlbedo*1e7,label='Norm. Albedo x 1e7')
+    pl.plot(MASTER[:,0],MASTER[:,1]/(ExposureCLR*Aperture*NativeDispersionNM),label='MASTER',color='k',linewidth=1)
+    pl.plot(MASTER[:,0],ToA//(ExposureCLR*Aperture*NativeDispersionNM),label='Top of Atm.')
+    pl.plot(MASTER[:,0],Ref[:,1]*1e7,label='Solar Ref. x 1e7')
+    pl.plot(MASTER[:,0],NormAlbedo*1e7,label='Norm. Albedo x 1e7')
     
     pl.plot(Jupiter_KarkRef1993[:,0]/10.,Jupiter_KarkRef1993[:,1]*1.8e7,label='Karkoschka, 1993 x 1.8e7',linewidth=1,color='0.5')
     
     
     pl.legend(loc=0,ncol=3, borderaxespad=0.,prop={'size':6})
-    pylab.savefig(Key+"Spectrum.png",dpi=300)
+    pylab.savefig("../1D Spectra/"+Key+"Spectrum.png",dpi=300)
     
     
     TempMaster=MASTER
-    TempMaster[:,0]=MASTER[:,0]/10.
+    TempMaster[:,0]=MASTER[:,0]
     TempMaster[:,1]=MASTER[:,1]/(ExposureCLR*Aperture*NativeDispersionNM)
-    np.savetxt(Key+"Spectrum.txt",MASTER,delimiter=" ",fmt="%10.3F %10.7F")
-    np.savetxt(Key+"Albedo.txt",NormAlbedowithWV,delimiter=" ",fmt="%10.3F %10.7F")
+    np.savetxt("../1D Spectra/"+Key+"Spectrum.txt",MASTER,delimiter=" ",fmt="%10.3F %10.7F")
+    np.savetxt("../1D Spectra/"+Key+"Albedo.txt",NormAlbedowithWV,delimiter=" ",fmt="%10.3F %10.7F")
