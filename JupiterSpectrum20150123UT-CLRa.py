@@ -6,6 +6,7 @@ Created on Tue Jul 15 07:22:23 2014
 """
 import sys
 sys.path.append('f:\\Astronomy\Python Play')
+sys.path.append('f:\\Astronomy\Python Play\Spectrophotometry\Spectroscopy')
 import matplotlib.pyplot as pl
 import pylab
 import numpy as np
@@ -17,6 +18,7 @@ import ComputeEW1 as CEW1 #This is directly under /Python Play
                             #am now configuration controlling and make the 
                             #switch
 import EquivWidthUtils as EWU
+import PlotUtils as PU
 import quantities
 from PyAstronomy import pyasl #This is where the best smoothing algorithm is!
 import datetime
@@ -103,7 +105,7 @@ for time in range (0,len(KeyArray)):
 
     flag=False
     for B in range(0,len(Bands.ID)):
-        print "B=",B
+        #print "B=",B
         Temp=EWU.ComputeEW1(MASTER,Target,DateTime,Bands.Type[B],Bands.ID[B],
                             Bands.WV0[B],Bands.WV1[B],Bands.WVCont[B],EWFN,flag)
         flag=True
@@ -133,55 +135,41 @@ for time in range (0,len(KeyArray)):
     
     NormAlbedowithWV=deepcopy(Ref)
     NormAlbedowithWV[:,1]=NormAlbedo
+    NormAlbedowithWV[:,0]=NormAlbedowithWV[:,0]/10.
     np.savetxt("../1D Spectra/"+Key+"Albedo.txt",NormAlbedowithWV,delimiter=" ",fmt="%10.3F %10.7F")
 
     EWFN="../EWs/"+Key+"-Albedo-EW.txt"
-    
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 5430",5350.,5470.,60.,EWFN,False)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 6190",6100.,6280.,100.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 7050",6980.,7090.,40.,EWFN,True)
-    BandName,BandStart,BandEnd,ContWidth,EW=CEW1.ComputeEW1(NormAlbedowithWV,Target,DateTime,BandType,"CH4 7250",7140.,7450.,80.,EWFN,True)
-
+    AlbedoBands=EWU.LinesBands_to_Measure("Jupiter_ObsBands_135mm100lpm.txt")
+    AlbedoBands.load_records(Type="Planetary",WVRange=[400.,750.])
+    print AlbedoBands.ID
+    flag=False
+    for B in range(0,len(AlbedoBands.ID)):
+        #print "B=",B
+        Temp=EWU.ComputeEW1(NormAlbedowithWV,Target,DateTime,AlbedoBands.Type[B],AlbedoBands.ID[B],
+                            AlbedoBands.WV0[B],AlbedoBands.WV1[B],AlbedoBands.WVCont[B],EWFN,flag)
+        flag=True
     #Begin plotting 
     
-    pl.figure(figsize=(6.5, 2.5), dpi=150, facecolor="white")
-    
-    pl.subplot(1, 1, 1)
-    #Plot Layout Configuration
-    x0=350
-    x1=1050
-    
-    xtks=15
-    y0=1.0e4
-    y1=1.0e9
-    #    ytks=9
     ExposureCLR = 300. #seconds
-    Aperture = (0.135/22.)**2. #meters^2
-    # Set x limits
-    pl.xlim(x0,x1)
-    # Set x ticks
-    pl.xticks(np.linspace(x0,x1,xtks, endpoint=True))
-    # Set y limits
-    pl.ylim(y0,y1)
-    # Set y ticks
-    pl.yscale('log')
-    pl.grid()
-    pl.tick_params(axis='both', which='major', labelsize=7)
-    pl.ylabel("Counts Per Second",fontsize=7)
-    pl.xlabel("Wavelength (A)",fontsize=7)
-    pl.title(Key+" Spectrum",fontsize=9)
+    Aperture = (0.135/22.)**2. #meters^2 
+    
+    #pl.figure(figsize=(6.5, 2.5), dpi=150, facecolor="white")
+
+    Jupiter=PU.PlotSetup("JupiterSpecPlotConfig.txt")
+    Jupiter.loadplotparams("f:","Jupiter","Spectra")
+    Jupiter.Setup_Plot()    
+    #############pl.title(Key+" Spectrum",fontsize=9)#################
+
     pl.plot(Ref[:,0]/10.,CLRonRef/(ExposureCLR*Aperture*NativeDispersionNM),label='CLR',linewidth=0.5)
     pl.plot(MASTER[:,0],MASTER[:,1]/(ExposureCLR*Aperture*NativeDispersionNM),label='MASTER',color='k',linewidth=1)
-    pl.plot(MASTER[:,0],ToA//(ExposureCLR*Aperture*NativeDispersionNM),label='Top of Atm.')
+    pl.plot(MASTER[:,0],ToA/(ExposureCLR*Aperture*NativeDispersionNM),label='Top of Atm.')
     pl.plot(MASTER[:,0],Ref[:,1]*1e7,label='Solar Ref. x 1e7')
     pl.plot(MASTER[:,0],NormAlbedo*1e7,label='Norm. Albedo x 1e7')
     
-    pl.plot(Jupiter_KarkRef1993[:,0]/10.,Jupiter_KarkRef1993[:,1]*1.8e7,label='Karkoschka, 1993 x 1.8e7',linewidth=1,color='0.5')
-    
+    pl.plot(Jupiter_KarkRef1993[:,0]/10.,Jupiter_KarkRef1993[:,1]*1.8e7,label='Karkoschka, 1993 x 1.8e7',linewidth=1,color='0.5')   
     
     pl.legend(loc=0,ncol=3, borderaxespad=0.,prop={'size':6})
-    pylab.savefig("../1D Spectra/"+Key+"Spectrum.png",dpi=300)
-    
+    pylab.savefig("../1D Spectra/"+Key+"Spectrum.png",dpi=300)    
     
     TempMaster=MASTER
     TempMaster[:,0]=MASTER[:,0]

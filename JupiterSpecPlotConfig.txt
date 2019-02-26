@@ -1,0 +1,2 @@
+PlotID,PlotType,X0,X1,DX,Xtype,Y0,Y1,DY,Ytype,DataList,
+Jupiter,Spectra,350.,1050.,50.,lin,1.0e4,1.0e9,1.,log,SpectralMeasurements.txt,
