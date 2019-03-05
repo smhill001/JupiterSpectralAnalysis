@@ -1,0 +1,3 @@
+MeasTarget,DataType,DataTarget,DateUT,Optics,Grating,Camera,FileList
+Jupiter,Planets,Jupiter,20150123UT,135mm,ST2000,100lpm-550CLR,Jupiter-20150123UT-550CLR-Obs.txt,
+Jupiter,Planets,Jupiter,20150123UT,135mm,ST2000,100lpm-742NIR,Jupiter-20150123UT-742NIR-Obs.txt,
