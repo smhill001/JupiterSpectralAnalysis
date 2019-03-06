@@ -5,7 +5,8 @@ Created on Tue Jul 15 07:22:23 2014
 @author: steven.hill
 """
 def JupiterSpectrumProcessor(Target,DateUT,Grating):
-    #Example Call: JupiterSpectrumProcessor("Jupiter","20150123UT"): Add Response Ref.,
+    #Example Call: JupiterSpectrumProcessor("Jupiter","20150123UT","100lpm-742NIR")
+    #  Add Response Ref.,
     #  e.g., PolluxResponse20150123UT.txt. Do we ever want to address
     #  CLR + NIR spectra?
     import sys
@@ -30,7 +31,7 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     JupPath.spectra(DateUT)
         
     #Load response calibration and solar reference spectrum
-    Response = scipy.fromfile(file="../PolluxResponse20150123UT.txt", dtype=float, count=-1, sep=" ")
+    Response = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/PolluxResponse20150123UT.txt", dtype=float, count=-1, sep=" ")
     Response=scipy.reshape(Response,[Response.size/2,2])
     Response[:,0]=Response[:,0]/10.
     Response[:,1]=pyasl.smooth(Response[:,1],3,'flat')
@@ -79,6 +80,7 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     for time in range (0,len(F.FNArray)):
     
         #Make key, read raw spectrum
+        print F.FNArray[time]
         Key,DateTime=CF.MakeKeyDate(F.FNArray[time]) 
         print Key
         CLR = scipy.fromfile(file=JupPath.input_path+F.FNArray[time], dtype=float, count=-1, sep='\t')    
