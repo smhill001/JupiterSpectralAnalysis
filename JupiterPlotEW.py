@@ -8,7 +8,7 @@ Make this callable with Target, DateUT, and Band ID
 
 
 """
-def JupiterAirmass(DateUT,BandID,Grating):
+def JupiterPlotEW(DateUT,BandID,Grating):
     import sys
     sys.path.append('f:\Astronomy\Projects\Jupiter\Spectral Data')
     sys.path.append('f:\\Astronomy\Python Play')
