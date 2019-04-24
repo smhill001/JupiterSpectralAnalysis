@@ -6,12 +6,17 @@ Created on Tue Jul 15 07:22:23 2014
 """
 import sys
 sys.path.append('f:\\Astronomy\Python Play')
+sys.path.append('f:\\Astronomy\Python Play\Spectrophotometry\Spectroscopy')
+sys.path.append('f:\\Astronomy\Python Play\Util')
 import matplotlib.pyplot as pl
 import pylab
 import numpy as np
 import scipy
 from scipy import interpolate
 from PyAstronomy import pyasl
+import os, fnmatch
+import GeneralSpecUtils as GSU
+import PlotUtils as PU
 
 
 Jupiter_1996UT = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Saturn/PROJECT/JUPS.DAT", dtype=float, count=-1, sep='\t')    
@@ -21,6 +26,23 @@ JupiterSlopeCorrection=np.linspace(1.02,0.93,Jupiter_1996UT.size/2)
 Jupiter_1996UT[:,1]=Jupiter_1996UT[:,1]*JupiterSlopeCorrection
 Jupiter_1996Smooth=pyasl.smooth(Jupiter_1996UT[:,1],9,'flat')
 
+NIRFiles=[]
+listOfFiles = os.listdir('../1D Spectra/')
+pattern='*100lpm-742NIR_Albedo.txt'
+for entry in listOfFiles:
+    if fnmatch.fnmatch(entry, pattern):
+        NIRFiles.append("../1D Spectra/"+entry)
+NIRspecarray=GSU.SpectrumAggregation('f:',NIRFiles,FileList=True)
+NIRspecarray.ComputeAverageandStats()    
+
+CLRFiles=[]
+listOfFiles = os.listdir('../1D Spectra/')
+pattern='*100lpm-550CLR_Albedo.txt'
+for entry in listOfFiles:
+    if fnmatch.fnmatch(entry, pattern):
+        CLRFiles.append("../1D Spectra/"+entry)
+CLRspecarray=GSU.SpectrumAggregation('f:',CLRFiles,FileList=True)
+CLRspecarray.ComputeAverageandStats()    
 
 
 KeyArray=["Jupiter20150209034346UT",
@@ -134,6 +156,12 @@ pl.scatter(Jupiter_1996UT[:,0]/10.,Jupiter_1996UT[:,1]*0.55,label='Jupiter_1996U
 pl.step((Jupiter_1996UT[:,0]-7.)/10.,Jupiter_1996Smooth*0.55,label='Jupiter_1996UT-Smth',color='g',linewidth=1.0,where='mid')
 
 pl.step(Jupiter_KarkRef1993[:,0]/10.,Jupiter_KarkRef1993[:,1],label='Karkoschka, 1994',linewidth=1,color='0.5',where='mid')
+
+print NIRspecarray.MeanSpec.shape
+PU.Draw_with_Conf_Level(NIRspecarray.MeanSpec,0.55,'r','Test',step=True)
+PU.Draw_with_Conf_Level(CLRspecarray.MeanSpec,0.55,'b','Test',step=True)
+#pl.step(NIRspecarray.MeanSpec[:,0],NIRspecarray.MeanSpec[:,1]*1.15)
+#pl.step(CLRspecarray.MeanSpec[:,0],CLRspecarray.MeanSpec[:,1]*0.55)
 
 LineWVs=np.array([486.0,543.0,576.0,  #H I Balmer
                   597.0,619.0,668.0,683.0,705.0,725.0,

@@ -31,7 +31,14 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     JupPath.spectra(DateUT)
         
     #Load response calibration and solar reference spectrum
-    Response = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/PolluxResponse20150123UT.txt", dtype=float, count=-1, sep=" ")
+    ResponseFile= {'20150123UT':'PolluxResponse20150123UT.txt',
+                   '20150209UT':'PolluxResponse20150210UT.txt',
+                   '20150210UT':'PolluxResponse20150210UT.txt',
+                   '20150318UT':'PolluxResponse20150318UT.txt',
+                   '20150322UT':'PolluxResponse20150322UT.txt',
+                   '20150331UT':'PolluxResponse20150322UT.txt'
+                   }
+    Response = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/"+ResponseFile[DateUT], dtype=float, count=-1, sep=" ")
     Response=scipy.reshape(Response,[Response.size/2,2])
     Response[:,0]=Response[:,0]/10.
     Response[:,1]=pyasl.smooth(Response[:,1],3,'flat')
@@ -102,8 +109,12 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
         ToA=GSU.SpectrumMath(CLRonRef,Response,"Divide")
         Albedo=GSU.SpectrumMath(ToA,Ref_g2v,"Divide")
         mAlbedo = np.ma.masked_invalid(Albedo)
-        AlbedoNormRangeIndices=np.where((Ref_g2v[:,0] >400.) & \
-             (Ref_g2v[:,0] < 750.))   
+        if Grating=='100lpm-550CLR':
+            AlbedoNormRangeIndices=np.where((Ref_g2v[:,0] >600.) & \
+                 (Ref_g2v[:,0] < 610.))   
+        elif Grating=='100lpm-742NIR':
+            AlbedoNormRangeIndices=np.where((Ref_g2v[:,0] >740.) & \
+                 (Ref_g2v[:,0] < 800.))   
         NormAlbedo=deepcopy(Albedo)
         NormAlbedo[:,1]=Albedo[:,1]/mAlbedo[AlbedoNormRangeIndices].max()
         np.savetxt(JupPath.One_D_path+Key+"Albedo.txt",NormAlbedo,delimiter=" ",fmt="%10.3F %10.7F")
@@ -123,8 +134,8 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
         pl.title(Target+" "+datetime.datetime.strftime(DateTime,'%Y-%m-%d %H:%M:%S')+
                     " Spectrum",fontsize=9)
     
-        pl.plot(CLRonRef[:,0],CLRonRef[:,1]/(ExposureCLR*Aperture*NativeDispersion),label='CLR',linewidth=0.5)
-        pl.plot(CLRonRef[:,0],ToA[:,1]/(ExposureCLR*Aperture*NativeDispersion),label='Top of Atm.')
+        pl.step(CLRonRef[:,0],CLRonRef[:,1]/(ExposureCLR*Aperture*NativeDispersion),label='CLR',linewidth=0.5)
+        pl.step(CLRonRef[:,0],ToA[:,1]/(ExposureCLR*Aperture*NativeDispersion),label='Top of Atm.')
         #pl.plot(Ref_g2v[:,0],Ref_g2v[:,1]*1e7,label='Solar Ref. x 1e7')
         pl.legend(loc=0,ncol=4, borderaxespad=0.,prop={'size':6})
         pl.subplots_adjust(left=0.08, right=0.98, top=0.90, bottom=0.15)
@@ -133,8 +144,8 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
         JupiterAlb.Setup_Plot()    
         pl.title(Target+" Albedo "+datetime.datetime.strftime(DateTime,'%Y-%m-%d %H:%M:%S')+
                     " Spectrum",fontsize=9)
-        pl.plot(NormAlbedo[:,0],NormAlbedo[:,1]*.56,label='Norm. Albedo')
-        pl.plot(Jupiter_KarkRef1993[:,0],Jupiter_KarkRef1993[:,1],label='Karkoschka, 1993',linewidth=1,color='0.5')   
+        pl.step(NormAlbedo[:,0],NormAlbedo[:,1]*.56,label='Norm. Albedo')
+        pl.step(Jupiter_KarkRef1993[:,0],Jupiter_KarkRef1993[:,1],label='Karkoschka, 1993',linewidth=1,color='0.5')   
         pl.legend(loc=0,ncol=4, borderaxespad=0.,prop={'size':6})
         pl.subplots_adjust(left=0.08, right=0.98, top=0.90, bottom=0.15)
         pl.savefig(JupPath.One_D_path+Key+"_"+Grating+"_Albedo.png",dpi=300)        
