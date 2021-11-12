@@ -41,12 +41,12 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     Response = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/"+ResponseFile[DateUT], dtype=float, count=-1, sep=" ")
     Response=scipy.reshape(Response,[Response.size/2,2])
     Response[:,0]=Response[:,0]/10.
-    Response[:,1]=pyasl.smooth(Response[:,1],3,'flat')
+    Response[:,1]=pyasl.smooth(Response[:,1],5,'flat')
     #MasterDispersion=(Response[(Response.size/2-1),0]-Response[0,0])/(Response.size/2-1)
     
     Ref_g2v = scipy.loadtxt(JupPath.reference_path+J.SpecType, dtype=float, skiprows=3,usecols=(0,1))
     Ref_g2v[:,0]=Ref_g2v[:,0]/10.
-    Ref_g2v[:,1]=pyasl.smooth(Ref_g2v[:,1],3,'flat')
+    Ref_g2v[:,1]=pyasl.smooth(Ref_g2v[:,1],5,'flat')
     
     #Load comparison albedo spectrum from Karkoschka, 1994 (1993 observations)
     Jupiter_Karkoschka1993 = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Saturn/Spectral Data/Karkoschka/1993.tab.txt", dtype=float, count=-1, sep=" ")    
@@ -63,8 +63,12 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     JupiterAlb.loadplotparams("f:","JupiterAlbedo","Spectra")
     
     #Load observations files and create Target+DateTime keys
-    O=CF.measurement_list(Jupiter.DataFile)
+    #O=CF.measurement_list(Jupiter.DataFile)
+    O=CF.meas_extend_test(Jupiter.DataFile) #Experiment in multiple level inheritance
+    
     O.load_records(MeasTgt=Target,DateUTSelect=DateUT,Grating=Grating)
+    print "O=",O.FileList
+    O.load_extra_field(MeasTgt=Target,DateUTSelect=DateUT,Grating=Grating)
     F=CF.ObsFileNames(O.FileList[0])
     F.GetFileNames()
     
@@ -85,6 +89,7 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
     flagB=False
     
     for time in range (0,len(F.FNArray)):
+        print "************************Extra Field: ",O.extra_field[0]
     
         #Make key, read raw spectrum
         print F.FNArray[time]
@@ -96,7 +101,7 @@ def JupiterSpectrumProcessor(Target,DateUT,Grating):
         NativeDispersion=(CLR[(CLR.size/2-1),0]-CLR[0,0])/(CLR.size/2-1)
         wave,sig=GSU.uniform_wave_grid(CLR[:,0],CLR[:,1],Extend=False)    
         CLRonRef=np.transpose(np.array([wave,sig]))
-        CLRonRef[:,1]=pyasl.smooth(CLRonRef[:,1],3,'flat')
+        #CLRonRef[:,1]=pyasl.smooth(CLRonRef[:,1],3,'flat')
         
         #Compute solar, telluric, and planetary equivalent widths from raw spectrum
         EWFN=JupPath.EW_path+DateUT+"-"+Grating+"-RawFlux-EW.txt"

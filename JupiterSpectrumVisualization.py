@@ -5,6 +5,11 @@ Created on Tue Jul 15 07:22:23 2014
 @author: steven.hill
 """
 def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
+    #Options for SpecType are:
+        #Albedo
+        #Spectrum
+        #Response
+        #RefStar
     import sys
     sys.path.append('f:\\Astronomy\Python Play')
     sys.path.append('f:\\Astronomy\Python Play\Spectrophotometry\Spectroscopy')
@@ -45,10 +50,13 @@ def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
     RefStarPath="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/"
     RefStar20150123UT = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/"+RefStarFiles['20150123UT'], dtype=float, count=-1, sep=" ")
     RefStar20150123UT=scipy.reshape(RefStar20150123UT,[RefStar20150123UT.size/2,2])
-    RefStar20150123UT[:,0]=RefStar20150123UT[:,0]
-    RefStar20150123UT[:,1]=pyasl.smooth(RefStar20150123UT[:,1],3,'flat')
-    K0IIIPath="f:/Astronomy/Python Play/SPLibraries/SpectralReferenceFiles/ReferenceLibrary/"
-    K0III=scipy.loadtxt(K0IIIPath+"k0iii.dat", dtype=float, usecols=(0,1))
+    #RefStar20150123UT[:,0]=RefStar20150123UT[:,0]
+    #RefStar20150123UT[:,1]=pyasl.smooth(RefStar20150123UT[:,1],5,'flat')
+    RefStar20150210UT = scipy.fromfile(file="f:/Astronomy/Projects/Planets/Jupiter/Spectral Data/"+RefStarFiles['20150210UT'], dtype=float, count=-1, sep=" ")
+    RefStar20150210UT=scipy.reshape(RefStar20150210UT,[RefStar20150210UT.size/2,2])
+    RefPath="f:/Astronomy/Python Play/SPLibraries/SpectralReferenceFiles/ReferenceLibrary/"
+    K0III=scipy.loadtxt(RefPath+"k0iii.dat", dtype=float, usecols=(0,1))
+    G2V=scipy.loadtxt(RefPath+"g2v.dat", dtype=float, usecols=(0,1))
 
     #Should include Jupiter Red and other Spectra here from 20130117UT
     #Maybe include 20130109 spectra - might require some extra work, and they're low dispersion!
@@ -72,13 +80,13 @@ def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
                   }
     elif SpecType=='Response':
         PlotLims={'All':{'x0':400,'x1':1000,'xtks':25,'y0':0.00,'y1':1.0,'ytks':13},
-                  '619CH4':{'x0':600,'x1':640,'xtks':21,'y0':0.00,'y1':1.0,'ytks':13},
+                  '619CH4':{'x0':600,'x1':640,'xtks':21,'y0':0.60,'y1':0.9,'ytks':16},
                   '725CH4':{'x0':700,'x1':750,'xtks':11,'y0':0.00,'y1':1.0e6,'ytks':9},
                   '889CH4':{'x0':860,'x1':920,'xtks':13,'y0':0.00,'y1':1.0e6,'ytks':12}
                   }
     elif SpecType=='RefStar':
         PlotLims={'All':{'x0':400,'x1':1000,'xtks':25,'y0':0.00,'y1':1.2e7,'ytks':13},
-                  '619CH4':{'x0':600,'x1':640,'xtks':21,'y0':5.0e6,'y1':1.0e7,'ytks':13},
+                  '619CH4':{'x0':600,'x1':640,'xtks':21,'y0':7.0e6,'y1':1.0e7,'ytks':16},
                   '725CH4':{'x0':700,'x1':750,'xtks':11,'y0':0.00,'y1':1.0e6,'ytks':9},
                   '889CH4':{'x0':860,'x1':920,'xtks':13,'y0':0.00,'y1':1.0e6,'ytks':12}
                   }
@@ -106,7 +114,7 @@ def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
     pl.ylabel(SpecType,fontsize=8,color="black")
     pl.xlabel(r"$Wavelength (nm)$",fontsize=8)
     
-    pl.title("Jupiter",fontsize=9)
+    pl.title('Jupiter '+Band+' '+SpecType,fontsize=9)
     
     if SpecType=='Albedo' or SpecType=='Spectrum':
         pl.step(Jupiter_KarkRef1993[:,0]/10.,Jupiter_KarkRef1993[:,1],label='Karkoschka, 1994',linewidth=1,color='k',where='mid')
@@ -121,11 +129,21 @@ def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
     
     if SpecType=='Response':
         pl.step(Response20150123UT[:,0],Response20150123UT[:,1],c='C7',label='Response20150123UT')
+        TempRefK0III=K0III
+        TempRefK0III[:,0]=TempRefK0III[:,0]/10.
+        CalcResponse=GSU.SpectrumMath(RefStar20150123UT,TempRefK0III,'Divide')
+        WVRangeIndices=np.where((CalcResponse[:,0] >450.) & \
+                 (CalcResponse[:,0] < 650.))   
+        CalcResponse[:,1]=CalcResponse[:,1]/CalcResponse[WVRangeIndices,1].max()
+        pl.step(CalcResponse[:,0],CalcResponse[:,1],c='C6',label='CalcResponse')
+        pl.step(CalcResponse[:,0],pyasl.smooth(CalcResponse[:,1],5,'flat'),c='C5',label='CalcResponseSmooth')
 
     if SpecType=='RefStar':
         print RefStar20150123UT
-        pl.step(RefStar20150123UT[:,0],RefStar20150123UT[:,1],c='C7',label='RefStar20150123UT')
-        pl.step(K0III[:,0]/10.,K0III[:,1]*9e6,c='C0',label='K0III')
+        pl.step(RefStar20150123UT[:,0],pyasl.smooth(RefStar20150123UT[:,1],5,'flat'),c='C7',label='RefStar20150123UT')
+        pl.step(RefStar20150210UT[:,0],pyasl.smooth(RefStar20150210UT[:,1]*0.85,5,'flat'),c='C6',label='RefStar20150210UT')
+        pl.step(K0III[:,0]/10.,pyasl.smooth(K0III[:,1]*9e6,5,'flat'),c='C0',label='K0III')
+        pl.step(G2V[:,0]/10.,pyasl.smooth(G2V[:,1]*9e6,5,'flat'),c='C1',label='G2V')
 
     
     LineWVs=np.array([486.0,543.0,576.0,  #H I Balmer
@@ -156,7 +174,7 @@ def JupiterSpectrumVisualization(Band='619CH4',SpecType="Albedo"):
     pl.subplots_adjust(left=0.08, bottom=0.12, right=0.98, top=0.92,
                     wspace=None, hspace=None)
                     
-    pylab.savefig('JupiterDayAverages_'+Band+'.png',dpi=300)
+    pylab.savefig('JupiterDayAverages_'+Band+'_'+SpecType+'.png',dpi=300)
     
     
     ###############################################################################

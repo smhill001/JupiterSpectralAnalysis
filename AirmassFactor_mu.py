@@ -2,6 +2,14 @@
 """
 Created on Mon Apr 08 06:48:03 2019
 
+This simple code numerically approximates the one-way airmass factor through a
+planetary atmosphere viewed from space (at ~infinite distance). It assumes
+a single reflecting layer model.
+
+For the integrated disk, the one-way airmass is ~2.0. For a slit the one-way
+airmass is ~1.5. There's also a function to determine the airmass for a
+given longitude and latitude.
+
 @author: Steven Hill
 """
 
